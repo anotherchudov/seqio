@@ -21,12 +21,15 @@ import json
 import operator
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
-from absl import logging
+import logging
 import apache_beam as beam
 from apache_beam import metrics
 import numpy as np
 import seqio
 import tensorflow.compat.v2 as tf
+
+logger = logging.getLogger('seqio')
+logger.setLevel("DEBUG")
 
 PROVENANCE_PREFIX = "provenance/"
 TASK_PROVENANCE_KEY = PROVENANCE_PREFIX + "task"
@@ -85,7 +88,7 @@ class PreprocessTask(beam.PTransform):
     self._tfds_data_dir = tfds_data_dir
     self._int64_max = 2**63 - 1
     self.shards = list(enumerate(task.source.list_shards(split)))
-    logging.info(
+    logger.info(
         "%s %s %s shards: %d %s",
         task.name,
         split,
@@ -107,7 +110,7 @@ class PreprocessTask(beam.PTransform):
       seqio.set_tfds_data_dir_override(self._tfds_data_dir)
 
     shard_index, shard_name = shard
-    logging.info("Processing shard: %s", shard_name)
+    logger.info("Processing shard: %s", shard_name)
     self._increment_counter("input-shards")
 
     # Create a unique, deterministic preprocessors seed for each task and shard.
@@ -154,7 +157,7 @@ class PreprocessTask(beam.PTransform):
       self._increment_counter("examples")
       # Log every power of two.
       if i & (i - 1) == 0:
-        logging.info("Example [%d] = %s", i, ex)
+        logger.info("Example [%d] = %s", i, ex)
       yield ex
 
   def expand(self, pipeline):
